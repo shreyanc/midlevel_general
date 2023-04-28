@@ -2,7 +2,10 @@
 
 Code for training a mid-level feature model using the [Mid-level Features Dataset](https://osf.io/5aupt/)
 
-Related papers:
+## Usage
+Running ```main.py``` trains a receptive-field regularized ResNet using default hyperparameters. 
+
+## Related papers:
 1. "[Towards Explainable Music Emotion Recognition: The Route via Mid-level Features](https://arxiv.org/abs/1907.03572)", Shreyan Chowdhury, Andreu Vall, Verena Haunschmid, Gerhard Widmer, ISMIR 2019 
 
 2. "[Two-level Explanations in Music Emotion Recognition](https://arxiv.org/abs/1905.11760)", Verena Haunschmid, Shreyan Chowdhury, Gerhard Widmer, ML4MD Workshop, ICML 2019
