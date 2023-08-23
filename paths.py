@@ -1,7 +1,8 @@
 import os
 
-HOME_ROOT = ''
-DATASETS_ROOT = ''
+HOME_ROOT = '/share/home/shreyan'
+DATASETS_ROOT = '/share/home/shreyan/datasets'
+MAIN_RUN_DIR = './runs'
 
 path_cache_fs = os.path.join(HOME_ROOT, 'data_caches')
 
