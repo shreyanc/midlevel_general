@@ -8,8 +8,8 @@ import torch
 from torch import optim, nn
 import torch.utils.data as torchdata
 
-from cpresnet import CPResnet, config_cp_field_shallow_m2
-from midlevel import load_midlevel_aljanaki, MidlevelDataset
+from models.cpresnet import CPResnet, config_cp_field_shallow_m2
+from datasets.midlevel import load_midlevel_aljanaki, MidlevelDataset
 from paths import MAIN_RUN_DIR
 from utils import dset_to_loader, EarlyStopping
 from train_funcs import train, test
