@@ -1,0 +1,6 @@
+Metadata-Version: 2.1
+Name: midlevel
+Version: 1.0
+Summary: Package to compute mid-level features from audio
+Author: Shreyan Chowdhury
+Author-email: shreyan0311@gmail.com
