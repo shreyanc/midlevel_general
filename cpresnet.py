@@ -295,7 +295,7 @@ class CPResnet_BackProp(CPResnet):
             ReverseLayerF.apply(emb_pooled.view(emb_pooled.size(0), -1), kwargs.get('lambda_', 1.)))
         x = self.feed_forward(emb[:num_labeled])
         if first_RUN: print("feed_forward:", x.size())
-        logit = x.squeeze(2).squeeze(2)
+        logit = x.squeeze()
         if first_RUN: print("logit:", logit.size())
         first_RUN = False
         return {"output": logit, "embedding": emb_pooled, "domain": domain}
