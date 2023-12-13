@@ -28,6 +28,40 @@ def dset_to_loader(dset, bs, shuffle=False):
     return DataLoader(dset, batch_size=bs, shuffle=shuffle, num_workers=num_workers, drop_last=True, pin_memory=False)
 
 
+
+def get_dataset_name_from_file_path(fp):
+    datasets_idx = fp.find('datasets')
+    if datasets_idx == -1:
+        return None
+
+    subdirs = fp[datasets_idx:].split(os.path.sep)
+    dataset_name = None
+    for i in range(len(subdirs)):
+        if subdirs[i] in ('datasets', 'datasets@fs') and i + 1 < len(subdirs):
+            dataset_name = subdirs[i + 1]
+            break
+
+    return dataset_name
+
+
+def get_spectrogram_cache_path(audio_fp, audio_processor, dataset_name=None, file_name=None, cache_dir=None):
+    if dataset_name is None:
+        dataset_name = get_dataset_name_from_file_path(audio_fp)
+    if file_name is None:
+        file_name = os.path.splitext(os.path.basename(audio_fp))[0]
+    processor_dir_name = audio_processor.name
+    spec_cache_path = os.path.join(cache_dir, dataset_name, processor_dir_name, file_name+'.npy')
+    return spec_cache_path
+
+
+def ensure_parents_exist(path):
+    parents, _ = os.path.split(path)
+    if not os.path.exists(parents):
+        os.makedirs(parents, exist_ok=True)
+        print(f"created dir {parents}")
+
+
+
 def num_if_possible(s):
     try:
         return int(s)
