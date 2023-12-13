@@ -7,7 +7,7 @@ from dataset_utils import slice_func, normalize_spec, get_dataset_stats, slice_f
 from audio import MadmomAudioProcessor
 import pandas as pd
 import numpy as np
-# from torchvision.transforms import Normalize
+from sklearn.model_selection import train_test_split
 
 # from helpers.specaugment import SpecAugment
 from utils import *
@@ -97,6 +97,19 @@ def temporal_mixup(x1, t1, x2, t2, slice_len):
     return sliced, interpolated_targets
 
 
+def get_extra_dataset(dset_name, seed=None, augment=None, test_size=0.1, labeled=False, normalizing_dset=None):
+    if seed is None:
+        seed = 0
+
+    if dset_name == 'maestro':
+        domain_files = list_files_deep(path_maestro_audio_15sec, filter_ext=['.wav', '.WAV', '.mp3'], full_paths=True)
+        tg_train_files, tg_test_files = train_test_split(domain_files, test_size=test_size, random_state=seed)
+        tg_tr_dataset = UnlabeledAudioDataset(name='maestro', audio_files=tg_train_files, augment=augment, slice_mode='start', normalizing_dset=normalizing_dset)
+        tg_te_dataset = UnlabeledAudioDataset(name='maestro', audio_files=tg_test_files, augment=None, slice_mode='start', normalizing_dset=normalizing_dset)
+        return tg_tr_dataset, tg_te_dataset
+
+
+
 class MidlevelDataset(DatasetBase):
     def __init__(self, **kwargs):
         super().__init__(name='midlevel', annotations=path_midlevel_annotations, **kwargs)
@@ -128,3 +141,24 @@ class MidlevelDataset(DatasetBase):
         return os.path.join(path_midlevel_audio_dir, str(songid) + '.mp3')
 
 
+
+class UnlabeledAudioDataset(DatasetBase):
+    def __init__(self, audio_files, **kwargs):
+        
+        super().__init__(cache_dir=path_cache_fs,
+                         name='audio_dataset', 
+                         duration=15,
+                         annotations=path_midlevel_annotations, 
+                         **kwargs)
+        
+        self.audio_files = audio_files
+
+    def __getitem__(self, ind):
+        audio_path = self.audio_files[ind]
+        x = self._get_spectrogram(audio_path, self.dataset_cache_dir)
+        slice_length = self.processor.times_to_frames(self.duration)
+        x_sliced, _, _ = slice_func(x, slice_length, self.processor, mode=self.slice_mode, padding=self.padding)
+        return audio_path, torch.from_numpy(x_sliced)
+
+    def __len__(self):
+        return len(self.audio_files)

@@ -1,5 +1,6 @@
 import pandas as pd
 import torch
+import torch.nn.functional as F
 import numpy as np
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
@@ -31,6 +32,49 @@ def train(model, dataloader, optimizer, criterion, epoch, run_name, **kwargs):
         if kwargs.get('loss_batch_average'):
             loss = torch.mean(torch.sum(loss, axis=-1))
 
+        loss_list.append(loss.item())
+        loss.backward()
+        optimizer.step()
+
+    epoch_loss = np.mean(loss_list)
+
+    return {'avg_loss': epoch_loss}
+
+
+def train_da_backprop(model, dataloader, optimizer, criterion, epoch, run_name, **kwargs):
+    model.train()
+    loss_list = []
+    ml_loss_list = []
+    domain_loss_list = []
+
+    dlen = kwargs['dataloader_len']
+
+    p = epoch / 20
+    lambda_ = 2. / (1 + np.exp(-10 * p)) - 1
+    # lambda_ *= 0.1
+
+    for batch_idx, batch in tqdm(enumerate(dataloader), ascii=True, total=dlen, desc=run_name):
+        (song_ids_ml, inputs_ml, labels), (song_names_p, inputs_piano) = batch
+        inputs_ml, labels, inputs_piano = inputs_ml.to(device), labels.to(device), inputs_piano.to(device)
+        inputs = torch.cat([inputs_ml, inputs_piano])
+        inputs = inputs.unsqueeze(1)
+
+        domain_y = torch.cat([torch.ones(inputs_ml.shape[0]),
+                              torch.zeros(inputs_piano.shape[0])])
+        domain_y = domain_y.to(device)
+
+        optimizer.zero_grad()
+        output = model(inputs, num_labeled=inputs_ml.shape[0], lambda_=lambda_)
+        label_preds = output['output']
+        domain_preds = output['domain']
+        # emb = output['embedding']
+
+        ml_loss = criterion(label_preds.float(), labels.float())
+        domain_loss = F.binary_cross_entropy_with_logits(domain_preds.squeeze(), domain_y)
+        loss = ml_loss + domain_loss
+
+        ml_loss_list.append(ml_loss.item())
+        domain_loss_list.append(domain_loss.item())
         loss_list.append(loss.item())
         loss.backward()
         optimizer.step()
